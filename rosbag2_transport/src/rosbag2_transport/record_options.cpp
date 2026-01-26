@@ -63,6 +63,16 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
 bool convert<rosbag2_transport::RecordOptions>::decode(
   const Node & node, rosbag2_transport::RecordOptions & record_options, int version)
 {
+  static constexpr int CURRENT_VERSION = 9;
+  static constexpr int MINIMUM_SUPPORTED_VERSION = 9;
+
+  int actual_version = version;
+  optional_assign<int>(node, "version", actual_version);
+
+  if (actual_version < MINIMUM_SUPPORTED_VERSION || actual_version > CURRENT_VERSION) {
+    return false;
+  }
+
   optional_assign<bool>(node, "all_topics", record_options.all_topics);
   optional_assign<bool>(node, "all_services", record_options.all_services);
   optional_assign<bool>(node, "all_actions", record_options.all_actions);
@@ -113,7 +123,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   std::unordered_map<std::string, rclcpp::QoS> qos_overrides;
   if (node["topic_qos_profile_overrides"]) {
     qos_overrides = YAML::decode_for_version<std::unordered_map<std::string, rclcpp::QoS>>(
-      node["topic_qos_profile_overrides"], version);
+      node["topic_qos_profile_overrides"], actual_version);
   }
   record_options.topic_qos_profile_overrides = qos_overrides;
 
